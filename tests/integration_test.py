@@ -981,7 +981,6 @@ class TestPull(BaseTestCase):
             self.client.remove_image('busybox')
         except docker.errors.APIError:
             pass
-        res = self.client.pull('busybox')
         self.assertEqual(type(res), six.text_type)
         self.assertGreaterEqual(
             len(self.client.images('busybox')), 1
@@ -994,11 +993,6 @@ class TestPullStream(BaseTestCase):
     def runTest(self):
         self.client.close()
         self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=10)
-        try:
-            self.client.remove_image('busybox')
-        except docker.errors.APIError:
-            pass
-        stream = self.client.pull('busybox', stream=True)
         for chunk in stream:
             if six.PY3:
                 chunk = chunk.decode('utf-8')
@@ -1470,7 +1464,13 @@ class TestRegressions(BaseTestCase):
 
 if __name__ == '__main__':
     c = docker.Client(base_url=DEFAULT_BASE_URL)
-    c.pull('busybox')
+    try:
+        img = c.inspect_image('busybox')
+        print "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ stock"
+    except docker.errors.APIError:
+        print "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ pulling"
+        c.pull('busybox')
+	print "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ pulled"
     exec_driver = c.info()['ExecutionDriver']
     EXEC_DRIVER_IS_NATIVE = exec_driver.startswith('native')
     c.close()
